@@ -1,0 +1,108 @@
+<tbody id="studentTableBody">
+    <!-- Yahan API se data dynamically aayega -->
+</tbody>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="edit_id">
+                    <div class="mb-3">
+                        <label>Name:</label>
+                        <input type="text" id="edit_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Email:</label>
+                        <input type="email" id="edit_email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Mobile:</label>
+                        <input type="text" id="edit_mobile" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    $(document).ready(function () {
+    // Fetch all students and show in table
+    function loadStudents() {
+        $.ajax({
+            url: "http://localhost/phpApi/api-fetch-all.php",
+            type: "GET",
+            dataType: "json",
+            success: function (response) {
+                var rows = "";
+                $.each(response, function (index, student) {
+                    rows += "<tr>" +
+                        "<td>" + student.id + "</td>" +
+                        "<td><a href='#' class='edit-user' data-id='" + student.id + "'>" + student.name + "</a></td>" +
+                        "<td>" + student.email + "</td>" +
+                        "<td>" + student.mobile + "</td>" +
+                        "<td>" + student.created_at + "</td>" +
+                        "</tr>";
+                });
+                $("#studentTableBody").html(rows);
+            },
+            error: function () {
+                $("#studentTableBody").html("<tr><td colspan='5' class='text-center text-danger'>Failed to load data</td></tr>");
+            }
+        });
+    }
+    loadStudents();
+
+    // Open edit modal on name click
+    $(document).on("click", ".edit-user", function () {
+        var userId = $(this).data("id");
+
+        $.ajax({
+            url: "http://localhost/phpApi/api-fetch-one.php",
+            type: "POST",
+            data: { id: userId },
+            dataType: "json",
+            success: function (user) {
+                $("#edit_id").val(user.id);
+                $("#edit_name").val(user.name);
+                $("#edit_email").val(user.email);
+                $("#edit_mobile").val(user.mobile);
+                $("#editModal").modal("show");
+            }
+        });
+    });
+
+    // Submit edit form and update user
+    $("#editUserForm").submit(function (event) {
+        event.preventDefault();
+        var formData = {
+            id: $("#edit_id").val(),
+            name: $("#edit_name").val(),
+            email: $("#edit_email").val(),
+            mobile: $("#edit_mobile").val()
+        };
+
+        $.ajax({
+            url: "http://localhost/phpApi/api-update.php",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            success: function (response) {
+                alert(response.message);
+                $("#editModal").modal("hide");
+                loadStudents(); // Refresh table
+            }
+        });
+    });
+});
+
+</script>
